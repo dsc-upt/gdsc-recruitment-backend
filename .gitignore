@@ -495,3 +495,9 @@ fabric.properties
 .idea/caches/build_file_checksums.ser
 
 # End of https://www.toptal.com/developers/gitignore/api/csharp,rider,git
+
+RecruitmentBackend/RecruitmentBackend/app.db
+
+RecruitmentBackend/RecruitmentBackend/app.db-shm
+
+RecruitmentBackend/RecruitmentBackend/app.db-wal
