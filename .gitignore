@@ -505,3 +505,7 @@ RecruitmentBackend/RecruitmentBackend/app.db-wal
 RecruitmentBackend/RecruitmentBackend/appsettings.Development.json
 
 RecruitmentBackend/.idea/.idea.RecruitmentBackend/.idea/dataSources.xml
+
+.DS_Store
+
+RecruitmentBackend/appsettings.Development.json
