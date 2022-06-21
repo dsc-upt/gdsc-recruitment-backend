@@ -10,9 +10,6 @@
     <ItemGroup>
         <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="6.0.6" />
         <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="6.0.6" />
-        <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="6.0.6" />
-        <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="6.0.6" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="6.0.6" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="6.0.6" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="6.0.5" />
@@ -20,6 +17,15 @@
 
     <ItemGroup>
       <None Remove="app.db" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="Areas\Identity\Pages\Account\LogOut.cshtml" />
+      <_ContentIncludedByDefault Remove="Areas\Identity\Pages\Shared\_LoginPartial.cshtml" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Migrations" />
     </ItemGroup>
 
 </Project>

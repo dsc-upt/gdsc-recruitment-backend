@@ -25,8 +25,7 @@ namespace RecruitmentBackend.Pages.Identity
             return new ChallengeResult("Google", authenticationProperties);
         }
 
-        public async Task<IActionResult> OnGetCallbackAsync(
-            string? returnUrl, string? remoteError)
+        public async Task<IActionResult> OnGetCallbackAsync(string? returnUrl, string? remoteError)
         {
             // Get the information about the user from the external login provider
             var googleUser = User.Identities.FirstOrDefault();
