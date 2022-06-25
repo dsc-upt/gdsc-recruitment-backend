@@ -12,6 +12,5 @@
   "Google": {
     "ClientId": "",
     "ClientSecret": "",
-    "CallbackPath": "/signin-google"
   }
 }
