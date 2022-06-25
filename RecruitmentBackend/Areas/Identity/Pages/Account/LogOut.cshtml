@@ -1,18 +1,17 @@
 ﻿@page
 @using Microsoft.AspNetCore.Identity
+@using RecruitmentBackend.Features.Users
+@using RecruitmentBackend.Utilities
 @attribute [IgnoreAntiforgeryToken]
-@inject SignInManager<IdentityUser> SignInManager
+@inject SignInManager<User> SignInManager
 
 @functions {
 
     public async Task<IActionResult> OnPost()
     {
-        if (SignInManager.IsSignedIn(User))
-        {
-            await SignInManager.SignOutAsync();
-        }
-
+        Console.WriteLine("try to log out");
+        User.Identity.WriteJson();
+        await SignInManager.SignOutAsync();
         return Redirect("~/");
     }
-
 }

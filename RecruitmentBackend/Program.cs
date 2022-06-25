@@ -1,39 +1,35 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.UI;
-using Npgsql.EntityFrameworkCore.PostgreSQL;
 using Microsoft.EntityFrameworkCore;
 using RecruitmentBackend.Areas.Identity;
 using RecruitmentBackend.Data;
+using RecruitmentBackend.Features.Users;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 var configuration = builder.Configuration;
+var services = builder.Services;
 var connectionString = configuration.GetConnectionString("Default");
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(connectionString));
-builder.Services.AddDatabaseDeveloperPageExceptionFilter();
-// builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
-// .AddEntityFrameworkStores<ApplicationDbContext>();
-builder.Services.AddRazorPages();
-builder.Services.AddServerSideBlazor();
-// builder.Services
-// .AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<IdentityUser>>();
-builder.Services.AddSingleton<WeatherForecastService>();
-builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie();
-builder.Services.AddAuthentication().AddGoogle(googleOptions =>
+
+services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(connectionString));
+services.AddDatabaseDeveloperPageExceptionFilter();
+services.AddDefaultIdentity<User>(options => options.SignIn.RequireConfirmedAccount = true).AddEntityFrameworkStores<ApplicationDbContext>();
+services.AddRazorPages();
+services.AddServerSideBlazor();
+services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<User>>();
+services.AddAuthentication().AddGoogle(options =>
 {
-    googleOptions.ClientId = configuration["Google:ClientId"];
-    googleOptions.ClientSecret = configuration["Google:ClientSecret"];
+    options.ClientId = configuration["Google:ClientId"];
+    options.ClientSecret = configuration["Google:ClientSecret"];
+    options.Events.OnTicketReceived = context =>
+    {
+        Console.WriteLine(context.Response.Body);
+        return Task.CompletedTask;
+    };
+    options.ClaimActions.MapJsonKey("urn:google:picture", "picture", "url");
 });
-builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<HttpContextAccessor>();
-builder.Services.AddHttpClient();
-builder.Services.AddScoped<HttpClient>();
 
 var app = builder.Build();
 
@@ -56,7 +52,7 @@ app.UseStaticFiles();
 app.UseRouting();
 
 app.UseAuthentication();
-// app.UseAuthorization();
+app.UseAuthorization();
 
 app.MapControllers();
 app.MapBlazorHub();
