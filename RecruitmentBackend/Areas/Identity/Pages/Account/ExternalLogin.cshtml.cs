@@ -50,6 +50,12 @@ public class ExternalLogin : PageModel
             return GoToErrorPage("Error loading external login information.");
         }
 
+        var isEmailVerified = info.Principal.FindFirstValue(CustomClaimTypes.EmailVerified);
+        if (isEmailVerified != "True")
+        {
+            return GoToErrorPage("Email is not verified");
+        }
+
         var email = info.Principal.FindFirstValue(ClaimTypes.Email);
         if (email is null)
         {
@@ -60,7 +66,6 @@ public class ExternalLogin : PageModel
 
         await _userStore.SetUserNameAsync(user, email, CancellationToken.None);
         await _emailStore.SetEmailAsync(user, email, CancellationToken.None);
-        info.Principal.Claims.WriteJson();
 
         var firstName = info.Principal.FindFirstValue(ClaimTypes.GivenName);
         if (firstName is null)
@@ -114,8 +119,6 @@ public class ExternalLogin : PageModel
         {
             return GoToErrorPage(GetResultErrorString(loginResult));
         }
-
-        info.Principal.Claims.WriteJson();
 
         await _signInManager.SignInAsync(user, false, info.LoginProvider);
         return LocalRedirect(returnUrl);
