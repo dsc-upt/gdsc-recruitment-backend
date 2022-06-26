@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.EntityFrameworkCore;
 using RecruitmentBackend.Features.Users;
 using RecruitmentBackend.Utilities;
 
@@ -15,16 +16,19 @@ public class ExternalLogin : PageModel
 {
     private readonly SignInManager<User> _signInManager;
     private readonly UserManager<User> _userManager;
+    private readonly RoleManager<IdentityRole> _roleManager;
     private readonly IUserStore<User> _userStore;
     private readonly IUserEmailStore<User> _emailStore;
     private const string Provider = "Google";
 
 
-    public ExternalLogin(SignInManager<User> signInManager, UserManager<User> userManager, IUserStore<User> userStore,
+    public ExternalLogin(SignInManager<User> signInManager, UserManager<User> userManager,
+        RoleManager<IdentityRole> roleManager, IUserStore<User> userStore,
         IEmailSender emailSender)
     {
         _signInManager = signInManager;
         _userManager = userManager;
+        _roleManager = roleManager;
         _userStore = userStore;
         _emailStore = GetEmailStore();
     }
@@ -62,7 +66,8 @@ public class ExternalLogin : PageModel
             return GoToErrorPage("No email from external provider.");
         }
 
-        var user = await _userManager.FindByEmailAsync(email) ?? new User();
+        var existingUser = await _userManager.FindByEmailAsync(email);
+        var user = existingUser ?? new User();
 
         await _userStore.SetUserNameAsync(user, email, CancellationToken.None);
         await _emailStore.SetEmailAsync(user, email, CancellationToken.None);
@@ -79,19 +84,13 @@ public class ExternalLogin : PageModel
             return GoToErrorPage("No lastName from external provider.");
         }
 
-        var picture = info.Principal.FindFirst("urn:google:picture");
-        if (picture is not null)
-        {
-            await _userManager.AddClaimAsync(user, picture);
-        }
-
         user.FirstName = firstName;
         user.LastName = lastName;
 
         returnUrl ??= Url.Content("~/");
-        var userAlreadyExists = user.SecurityStamp is not null || user.ConcurrencyStamp is not null;
-        if (userAlreadyExists)
+        if (existingUser is not null)
         {
+            await UpdatePictureLink(info, user);
             return await UpdateUserAndSignIn(user, info, returnUrl);
         }
 
@@ -100,10 +99,20 @@ public class ExternalLogin : PageModel
 
         if (createResult.Succeeded)
         {
+            await UpdatePictureLink(info, user);
             return await HandleNewUserSignIn(user, info, returnUrl);
         }
 
         return GoToErrorPage(GetResultErrorString(createResult));
+    }
+
+    private async Task UpdatePictureLink(ExternalLoginInfo info, User user)
+    {
+        var picture = info.Principal.FindFirst(CustomClaimTypes.Picture);
+        if (picture is not null)
+        {
+            await _userManager.AddClaimAsync(user, picture);
+        }
     }
 
     public string GetResultErrorString(IdentityResult result)
@@ -118,6 +127,17 @@ public class ExternalLogin : PageModel
         if (!loginResult.Succeeded)
         {
             return GoToErrorPage(GetResultErrorString(loginResult));
+        }
+
+        var isFirstUser = await _userManager.Users.CountAsync() == 1;
+        if (isFirstUser)
+        {
+            if (!await _roleManager.RoleExistsAsync(Roles.Admin))
+            {
+                await _roleManager.CreateAsync(new IdentityRole(Roles.Admin));
+            }
+
+            await _userManager.AddToRoleAsync(user, Roles.Admin);
         }
 
         await _signInManager.SignInAsync(user, false, info.LoginProvider);
@@ -141,7 +161,8 @@ public class ExternalLogin : PageModel
         }
 
         // Sign in the user with this external login provider if the user already has a login.
-        var signInResult = await _signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, false, true);
+        var signInResult =
+            await _signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, false, true);
         if (signInResult.Succeeded)
         {
             return LocalRedirect(returnUrl);

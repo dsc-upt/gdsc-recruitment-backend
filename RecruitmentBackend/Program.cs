@@ -1,9 +1,12 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using RecruitmentBackend.Areas.Identity;
 using RecruitmentBackend.Data;
 using RecruitmentBackend.Features.Users;
+using RecruitmentBackend.Services;
 using RecruitmentBackend.Utilities;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,7 +18,8 @@ var connectionString = configuration.GetConnectionString("Default");
 
 services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(connectionString));
 services.AddDatabaseDeveloperPageExceptionFilter();
-services.AddDefaultIdentity<User>(options => options.SignIn.RequireConfirmedAccount = true)
+services.AddSingleton<IEmailSender, EmailSender>();
+services.AddIdentity<User, IdentityRole>(options => options.SignIn.RequireConfirmedAccount = true)
    .AddEntityFrameworkStores<ApplicationDbContext>();
 services.AddRazorPages();
 services.AddServerSideBlazor();
